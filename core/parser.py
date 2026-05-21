@@ -18,11 +18,6 @@ if raw_bytes is not None:
     readable_ip = socket.inet_ntoa(raw_bytes)
     unpacked_bytes = struct.unpack(format_string , raw_bytes)
 
-    
-    # with open(r'core\logs.txt', 'w') as f:
-    #     f.write(str(raw_bytes))
-    # print("Successfully written to logs")
-
 
     parsed_packet = PacketParser.parse_packet_layers(raw_bytes)
     if parsed_packet:
