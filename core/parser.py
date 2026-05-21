@@ -1,5 +1,6 @@
 from sniffer import NetworkSnifferr, PacketParser
 import struct
+import socket
 
 ip = '192.168.56.1'
 port = 0
@@ -12,14 +13,15 @@ raw_bytes, address = net.packet_data
 
 if raw_bytes is not None:
     format_string = '> 12s B 2s 4s 4s'
-    # Add these temporary checkpoints to find the mismatch:
     print("bytes size(needed):", struct.calcsize(format_string))
     print("bytes size:", len(raw_bytes))
-
+    readable_ip = socket.inet_ntoa(raw_bytes)
     unpacked_bytes = struct.unpack(format_string , raw_bytes)
-    with open(r'core\logs.txt', 'w') as f:
-        f.write(str(unpacked_bytes))
-    print("Successfully written to logs")
+
+    
+    # with open(r'core\logs.txt', 'w') as f:
+    #     f.write(str(raw_bytes))
+    # print("Successfully written to logs")
 
 
     parsed_packet = PacketParser.parse_packet_layers(raw_bytes)
