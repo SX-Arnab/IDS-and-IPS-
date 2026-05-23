@@ -20,8 +20,8 @@ class NetworkSnifferr:
         try:
             count = 0
             while True:
-                self.packet_data = self.sock.recvfrom(65535)
-                print(self.packet_data)
+                self.self.packet_data = self.sock.recvfrom(65535)
+                print(self.self.packet_data)
                 
                 count += 1
                 if count >= 10:
@@ -39,13 +39,17 @@ if __name__ == "__main__":
     net.start_capture()
 
 class PacketParser:
-    @staticmethod
-    def parse_packet_layers(packet_data: bytes) -> dict:
+    def parse_packet_layers(self ,packet_data: bytes) -> dict:
+        self.source_ip = source_ip
+        self.destination_ip =destination_ip
 
-        if len(packet_data) < 20:
+        self.source_port = source_ip
+        self.destination_port = destination_port
+        self.protocol_type = protocol_type
+        if len(self.packet_data) < 20:
             return None
 
-        ip_header_rwa = packet_data[0:20]
+        ip_header_rwa = self.packet_data[0:20]
         ip_fields = struct.unpack("!BBHHHBBH4s4s", ip_header_rwa)
         
         version_ihl = ip_fields[0]
@@ -60,12 +64,12 @@ class PacketParser:
 
         source_port = None
         destination_port = None
-        payload = packet_data[ip_header_length:]
+        payload = self.packet_data[ip_header_length:]
 
 
         if protocol_type == 6:  # TCP
-            if len(payload) >= 20:
-                tcp_header_raw = packet_data[ip_header_length : ip_header_length + 20]
+            if len (payload) >= 20:
+                tcp_header_raw = self.packet_data[ip_header_length : ip_header_length + 20]
                 tcp_fields = struct.unpack("!HHLLBBHHH", tcp_header_raw)
                 
                 source_port = tcp_fields[0]
@@ -76,7 +80,7 @@ class PacketParser:
 
         elif protocol_type == 17:  # UDP
             if len(payload) >= 8:
-                udp_header_raw = packet_data[ip_header_length : ip_header_length + 8]
+                udp_header_raw = self.packet_data[ip_header_length : ip_header_length + 8]
                 udp_fields = struct.unpack("!HHHH", udp_header_raw)
                 
                 source_port = udp_fields[0]

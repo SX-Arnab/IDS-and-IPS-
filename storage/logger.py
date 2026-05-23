@@ -1,6 +1,6 @@
 import os
 import datetime
-
+from ..core.sniffer import PacketParser, NetworkSnifferr
 class IDSLogger:
     def __init__(self, log_dir= r"storage\logs", filename="traffic.log"):
         # 1. Store the paths as instance variables
@@ -27,9 +27,18 @@ class IDSLogger:
             log_file.write(log_entry)
 
 
+network = PacketParser('192.168.1.5')
+src_ip = network.source_ip
+des_ip = network.destination_ip
+
+protocol_type = network.protocol_type
+
+src_port = network.source_port
+des_port = network.destination_port
+
 if __name__ == "__main__":
     # Test the logger structure independently
     # This will create a 'storage/traffic.log' file if you use "storage"
-    logger = IDSLogger(log_dir="storage\logs") 
-    logger.log_packet("192.168.56.1", "10.0.0.5", "TCP", 64)
+    logger = IDSLogger(log_dir= r"IDS-and-IPS-\storage\logs") 
+    logger.log_packet(src_ip, des_ip, protocol_type, 64)
     print("Test packet written to storage/traffic.log successfully!")
