@@ -3,7 +3,7 @@ import socket
 import struct
 
 class NetworkSnifferr:
-    def __init__(self, host_ip) -> None:
+    def __init__(self, host_ip):
         self.host_ip = host_ip
         self.sock = None
 
@@ -20,8 +20,8 @@ class NetworkSnifferr:
         try:
             count = 0
             while True:
-                self.self.packet_data = self.sock.recvfrom(65535)
-                print(self.self.packet_data)
+                self.packet_data = self.sock.recvfrom(65535)
+                print(self.packet_data)
                 
                 count += 1
                 if count >= 10:
@@ -39,59 +39,54 @@ if __name__ == "__main__":
     net.start_capture()
 
 class PacketParser:
-    def parse_packet_layers(self ,packet_data: bytes) -> dict:
-        self.source_ip = source_ip
-        self.destination_ip =destination_ip
-
-        self.source_port = source_ip
-        self.destination_port = destination_port
-        self.protocol_type = protocol_type
-        if len(self.packet_data) < 20:
+    @staticmethod
+    def parse_packet_layers(packet_data: bytes) -> dict:
+        first_byte = packet_data[0]
+        if (first_byte >> 4) == 4:
+            ip_offset = 0 
+        else:
+            ip_offset = 14 
+        if len(packet_data) < (ip_offset + 20):
             return None
 
-        ip_header_rwa = self.packet_data[0:20]
-        ip_fields = struct.unpack("!BBHHHBBH4s4s", ip_header_rwa)
+        ip_header_raw = packet_data[ip_offset : ip_offset + 20]
+        ip_fields = struct.unpack("!BBHHHBBH4s4s", ip_header_raw)
         
+        raw_src_ip = packet_data[ip_offset + 12 : ip_offset + 16]
+        raw_dest_ip = packet_data[ip_offset + 16 : ip_offset + 20]
+        print(f"DEBUG: Data length is {len(raw_src_ip)} bytes | Hex representation: {raw_src_ip.hex()}")
+
+        source_ip = socket.inet_ntoa(raw_src_ip)
+        destination_ip = socket.inet_ntoa(raw_dest_ip)
+
         version_ihl = ip_fields[0]
         ihl = version_ihl & 0x0F
-        ip_header_length = ihl * 4  
+        ip_header_length = ip_offset + (ihl * 4)  
         
-
         protocol_type = ip_fields[6]
-        source_ip = socket.inet_ntoa(ip_fields[8])
-        destination_ip = socket.inet_ntoa(ip_fields[9])
+        protocol_name = {6: "TCP", 17: "UDP", 1: "ICMP"}.get(protocol_type, f"RAW({protocol_type})")
         
+        source_port = "N/A"
+        destination_port = "N/A"
+        payload = packet_data[ip_header_length:]
 
-        source_port = None
-        destination_port = None
-        payload = self.packet_data[ip_header_length:]
+        if protocol_type == 6 and len(payload) >= 20:  
+            tcp_fields = struct.unpack("!HHLLBBHHH", packet_data[ip_header_length : ip_header_length + 20])
+            source_port = tcp_fields[0]
+            destination_port = tcp_fields[1]
 
 
-        if protocol_type == 6:  # TCP
-            if len (payload) >= 20:
-                tcp_header_raw = self.packet_data[ip_header_length : ip_header_length + 20]
-                tcp_fields = struct.unpack("!HHLLBBHHH", tcp_header_raw)
-                
-                source_port = tcp_fields[0]
-                destination_port = tcp_fields[1]
-                
-                tcp_ihl = (tcp_fields[4] >> 4) * 4
-                payload = payload[tcp_ihl:]
-
-        elif protocol_type == 17:  # UDP
-            if len(payload) >= 8:
-                udp_header_raw = self.packet_data[ip_header_length : ip_header_length + 8]
-                udp_fields = struct.unpack("!HHHH", udp_header_raw)
-                
-                source_port = udp_fields[0]
-                destination_port = udp_fields[1]
-                payload = payload[8:]  # UDP headers are always 8 bytes
+        elif protocol_type == 17 and len(payload) >= 8:  
+            udp_fields = struct.unpack("!HHHH", packet_data[ip_header_length : ip_header_length + 8])
+            source_port = udp_fields[0]
+            destination_port = udp_fields[1]
 
         return {
             "src_ip": source_ip,
             "dest_ip": destination_ip,
-            "protool": protocol_type,
+            "protocol": protocol_name,
             "src_port": source_port,
             "dest_port": destination_port,
             "payload": payload
         }
+    
