@@ -49,4 +49,4 @@ except KeyboardInterrupt:
         raw_socket.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
     except:
         pass
-    sys.exit("\nSniffer stopped gracefully.")
+    sys.exit("\nSniffer stopped gracefully.") 
